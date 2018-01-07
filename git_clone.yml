@@ -1,0 +1,14 @@
+---
+- name: Git Clone
+  hosts: servers
+  remote_user: root
+  vars:
+    github_user: jemli_fathi
+  tasks:
+    - name: Clone Git Repo
+      block:
+        - git:
+            repo: 'https://{{ github_user }}:{{ github_password }}@repo'
+            dest: path_to_your_repo
+            update:  no
+...

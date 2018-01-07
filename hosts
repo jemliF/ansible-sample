@@ -1,0 +1,2 @@
+[servers]
+IP_ADDRESS ansible_port=6321 ansible_user=user ansible_ssh_pass=pass

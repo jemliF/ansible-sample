@@ -1,0 +1,53 @@
+---
+- name: VPS Setup
+  hosts: servers
+  remote_user: root
+  vars:
+    user: admin
+  tasks:
+    - name: Install Essantials
+      apt: name={{ item }} update_cache=yes
+      with_items:
+        - git
+        - htop
+        - nano
+    - name: Create a new user
+      when: user is defined
+      user: name={{ user }} comment="Admin user" shell=/bin/sh
+    - name: Adding SSH key
+      authorized_key: user={{ user }} key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+    - name: "Add {{ user }} to sudoers"
+      when: user is defined
+      template: src=templates/sudoers.j2 dest=/etc/sudoers.d/{{ user }}-sudoer validate='visudo -cf %s'
+    - name: Install Docker
+      block:
+        - apt_repository:
+            repo: deb docker docker-engine docker.io
+            state: absent 
+            update_cache: yes
+        - apt: name= {{item}} update_cache=yes
+          with_items:
+            - linux-image-extra-3.13.0-125-generic
+            - linux-image-extra-virtual
+      block:
+        - apt: name= {{item}} update_cache=yes
+          with_items:
+            - apt-transport-https
+            - ca-certificates
+            - curl
+            - software-properties-common
+        - command: bash -c "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -"
+        - apt_repository:
+            repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu trusty stable"
+            state: present
+            update_cache: yes
+      block:
+        - apt: name="docker-ce"
+    - name: Install Docker Compose 
+      block:
+        - command: bash -c "curl -L https://github.com/docker/compose/releases/download/1.16.1/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose"
+        - file:
+            path: /usr/local/bin/docker-compose
+            state: file
+            mode: "u=x,g=x,o=x"
+...

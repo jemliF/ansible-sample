@@ -1,0 +1,23 @@
+---
+- name: Common Tasks
+  hosts: servers
+  remote_user: root
+  vars:
+    user: admin
+
+  tasks:
+    - name: Install Git
+      apt: name={{ item }} update_cache=yes
+      with_items:
+        - git
+        - htop
+        - nano
+    - name: Create a new user
+      when: user is defined
+      user: name={{ user }} comment="Admin user" shell=/bin/sh
+    - name: Adding SSH key
+      authorized_key: user={{ user }} key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+    - name: "Add {{ user }} to sudoers"
+      when: user is defined
+      template: src=templates/sudoers.j2 dest=/etc/sudoers.d/{{ user }}-sudoer validate='visudo -cf %s'
+...
